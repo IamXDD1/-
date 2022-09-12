@@ -1,0 +1,147 @@
+#pragma once
+#include <map>
+#include <vector>
+#include <tuple>
+#include <algorithm>
+
+template <class T>
+class Counter : public std::map<T, int>
+{
+public:
+    Counter() : std::map<T, int>() {}
+    Counter(std::vector<T> items)
+    {
+        for (auto i : items)
+        {
+            this->operator[](i) += 1;
+        }
+    }
+    std::vector<T> elements()
+    {
+        std::vector<T> retval;
+        for (auto i : *this)
+        {
+            for (int j = 0; j < i.second; ++j)
+            {
+                retval.push_back(i.first);
+            }
+        }
+    }
+    std::vector<T> most_common()
+    {
+        std::vector<std::tuple<int, int, T>> array;
+        int j = 0;
+        for (auto i : *this)
+        {
+            array.push_back(std::make_tuple(i.second, j, i.first));
+            ++j;
+        }
+        std::stable_sort(array.begin(), array.end());
+        std::vector<T> retval;
+        for (auto i = array.crbegin(); i != array.crend(); i++)
+        {
+            retval.push_back(std::get<2>(*i));
+        }
+        return retval;
+    }
+    std::vector<T> most_common(int n)
+    {
+        auto retval = this->most_common();
+        if (n <= 0)
+        {
+            return retval;
+        }
+        return std::vector<T>(retval.begin(), retval.begin() + n);
+    }
+    int total()
+    {
+        int c = 0;
+        for (auto i : *this)
+        {
+            c += i.second;
+        }
+        return c;
+    }
+    void subtract()
+    {
+        for (auto i : *this)
+        {
+            this->subtract(i.first);
+        }
+    }
+    void subtract(T key)
+    {
+        this->operator[](key)--;
+    }
+    void subtract(std::vector<T> keys)
+    {
+        for (auto key : keys)
+        {
+            this->subtract(key);
+        }
+    }
+    Counter operator+(Counter& rhs)
+    {
+        Counter retval;
+        for (auto i : *this)
+        {
+            int v = i.second + rhs[i.first];
+            if (v > 0)
+            {
+                retval[i.first] = v;
+            }
+        }
+        for (auto i : rhs)
+        {
+            if (retval.find(i.first) == retval.end() && i.second > 0)
+            {
+                retval[i.first] = i.second;
+            }
+        }
+        return retval;
+    }
+    Counter operator-(Counter& rhs)
+    {
+        Counter retval;
+        for (auto i : *this)
+        {
+            int v = i.second - rhs[i.first];
+            if (v > 0)
+            {
+                retval[i.first] = v;
+            }
+        }
+        for (auto i : rhs)
+        {
+            if (retval.find(i.first) == retval.end() && i.second < 0)
+            {
+                retval[i.first] = 0 - i.second;
+            }
+        }
+        return retval;
+    }
+    Counter operator+()
+    {
+        Counter retval;
+        for (auto i : *this)
+        {
+            if (i.second > 0)
+            {
+                retval[i.first] = i.second;
+            }
+        }
+        return retval;
+    }
+    Counter operator-()
+    {
+        Counter retval;
+        for (auto i : *this)
+        {
+            if (i.second < 0)
+            {
+                retval[i.first] = 0 - i.second;
+            }
+        }
+        return retval;
+    }
+};
